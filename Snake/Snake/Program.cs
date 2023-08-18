@@ -6,7 +6,11 @@ class SnakeGame
     {
         // 공간 생성명령
         DrawWall();
+
         // 뱀 생성명령
+        Point c = new Point(10, 10, "ㅁ"); // 뱀의 머리 위치와 뱀의 몸통 모양을 정합니다. 이 c는 Point 클래스(객체)의 변수입니다.
+        Snake snake = new Snake(c, 3, Direction.RIGHT);
+        snake.SnakeDraw();
 
         // 음식 생성명령
         // 뱀 동작명령
@@ -24,17 +28,17 @@ class SnakeGame
         DOWN
     }
 
-    class Coordinate
+    class Point
     {
         public int x { get; set; }
         public int y { get; set; }
         public string symbol { get; set; }
 
-        public Coordinate(int _x, int _y, string _symbol)
+        public Point(int _x, int _y, string _symbol) // Point 클래스를 사용할 변수는 다음과 같은 자료형을 가집니다. 
         {
-            x = _x;
-            y = _y;
-            symbol = _symbol;
+            x = _x; // x좌표와
+            y = _y; // y좌표에
+            symbol = _symbol; // _symbol이라는 모양을 넣을겁니다.
         }
 
         public void Draw()
@@ -47,13 +51,23 @@ class SnakeGame
     class Snake
     {
         // 뱀 생성
-        public List<Coordinate> wholeBody;
-        public Direction direction;
+        public List<Point> wholeBody; // 뱀의 몸통 전체를 리스트 컬랙션으로 선언합니다. 리스트의 구성원은 몸통 한칸씩입니다.
+        public Direction direction; // 뱀의 진행 방향입니다.
 
-        public Snake( Coordinate coordinate, int bodyLength,  Direction _direction )
+        public Snake( Point body, int bodyLength,  Direction _direction )
         {
             direction = _direction;
-            wholeBody = new List<Coordinate>();
+            wholeBody = new List<Point>();
+            for (int i = 0; i < bodyLength; i++)
+            {
+                Point point = new Point(body.x, body.y, "ㅁ");
+                wholeBody.Add(point);
+                body.x += 1;
+            }
+        }
+
+        public void SnakeDraw()
+        {
 
         }
         // 뱀 동작
