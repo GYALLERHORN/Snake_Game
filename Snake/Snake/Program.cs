@@ -46,7 +46,18 @@ class SnakeGame
 
     class Snake
     {
-        
+        // 뱀 생성
+        public List<Coordinate> wholeBody;
+        public Direction direction;
+
+        public Snake( Coordinate coordinate, int bodyLength,  Direction _direction )
+        {
+            direction = _direction;
+            wholeBody = new List<Coordinate>();
+
+        }
+        // 뱀 동작
+        // 뱀 충돌 판별&상황별 동작
     }
 
 
