@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Diagnostics;
+using System.Drawing;
 
 class SnakeGame
 {
@@ -7,24 +8,59 @@ class SnakeGame
         // 공간 생성명령
         DrawWall();
 
-        // 뱀 생성명령
-        Point p = new Point(10, 10, "*"); // 뱀의 머리 위치와 뱀의 몸통 모양을 정합니다. 이 c는 Point 클래스(객체)의 변수입니다.
-        Snake snake = new Snake(p, 7, Direction.RIGHT);
+        // 뱀
+        Point point = new Point(10, 10, "*");
+        Snake snake = new Snake(point, 5, Direction.RIGHT);
         snake.SnakeDraw();
 
-        FoodCreator foodCreator = new FoodCreator(50, 20, "!");
-        Point foodPosition = foodCreator.CreateFoodPosition();
-        foodPosition.Draw();
-
         // 음식 생성명령
+        FoodCreator foodCreator = new FoodCreator(50, 20, "!"); // x50, y20 중 무작위 칸에 음식!이 생성될 겁니다.
+        Point food = foodCreator.CreateFoodPosition(); // x50, y20 중 무작위 칸에 생성될 음식의 위치를 정합니다.
+        food.Draw(); // 정해진 칸에 음식을 그립니다.
 
+        while (true)
+        {
+            if (Console.KeyAvailable)
+            {
+                var key = Console.ReadKey(true).Key;
 
-        // 뱀 동작명령
-        // 뱀 충돌 감지
-        // 
+                switch (key)
+                {
+                    case ConsoleKey.LeftArrow:
+                        snake.direction = Direction.LEFT;
+                        break;
+                    case ConsoleKey.RightArrow:
+                        snake.direction = Direction.RIGHT;
+                        break;
+                    case ConsoleKey.UpArrow:
+                        snake.direction = Direction.UP;
+                        break;
+                    case ConsoleKey.DownArrow:
+                        snake.direction = Direction.DOWN;
+                        break;
+                } 
+            }
 
+            if (snake.SnakeEatFood(food))
+            {
+                food.Draw();
+                food = foodCreator.CreateFoodPosition();
+                food.Draw();
+            }
+            else
+            {
+                snake.Move();
+            }
 
-        
+            if (snake.SnakeHitTail() || snake.SnakeHitWall())
+            {
+                break;
+            }
+
+            Thread.Sleep(200);
+        }
+        Console.SetCursorPosition(1, 21);
+        Console.WriteLine("GAMEOVER|GAMEOVER|GAMEOVER|GAMEOVER|GAMEOVER|GAMEOVER|GAMEOVER|GAMEOVER|GAMEOVER|GAMEOVER|");
     }
     enum Direction
     {
@@ -47,45 +83,123 @@ class SnakeGame
             symbol = _symbol; // _symbol이라는 모양을 넣을겁니다.
         }
 
-        
 
         public void Draw()
         {
             Console.SetCursorPosition(x, y);
             Console.Write(symbol);
         }
+
+        public void Clear()
+        {
+            symbol = " ";
+            Draw();
+        }
+
+        public bool IsHit(Point point)
+        {
+            return point.x == x && point.y == y; // head.IsHit(food)로 호출하면 return foodx == headx && foody == heady; 이런 뜻이다.
+        }
     }
 
     class Snake
     {
-        // 뱀 생성
-        public List<Point> wholeBody; // 뱀의 몸통 전체를 리스트 컬랙션으로 선언합니다. 리스트의 구성원은 몸통 한칸씩입니다.
-        public Direction direction; // 뱀의 진행 방향입니다.
+        public List<Point> body;
+        public Direction direction;
 
-        public Snake( Point body, int bodyLength,  Direction _direction ) // 뱀의 생김새
+        public Snake(Point bodyPoint, int bodyLength, Direction _direction)
         {
+            body = new List<Point>();
             direction = _direction;
-            wholeBody = new List<Point>();
             for (int i = 0; i < bodyLength; i++)
             {
-                Point point = new Point(body.x, body.y, "*");
-                wholeBody.Add(point);
-                body.x -= 1;
+                Point p = new Point(bodyPoint.x, bodyPoint.y, "*");
+                body.Add(p);
+                bodyPoint.x += 1;
             }
-
         }
 
         public void SnakeDraw()
         {
-            foreach (Point bodyPoint in wholeBody)
+            foreach (Point p in body)
             {
-                bodyPoint.Draw();
+                p.Draw();
             }
         }
-        // 뱀 동작
-        // 뱀 충돌 판별&상황별 동작
-    }
 
+        public bool SnakeEatFood(Point food)
+        {
+            var head = FindHeadposition();
+            if (head.IsHit(food))
+            {
+                food.symbol = head.symbol;
+                body.Add(food);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public bool SnakeHitTail()
+        {
+            Point head = body.Last();
+            for (int i = 0; i < body.Count - 1; i++)
+            {
+                if (head.IsHit(body[i]))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public bool SnakeHitWall()
+        {
+            Point head = body.Last();
+            if (head.x <= 0 || head.y <= 0 || head.x >= 50 || head.y >= 20)
+            {
+                return true;
+            }
+            return false;
+        }
+
+
+        public void Move()
+        {
+            Point tail = body.First(); // 꼬리의 자리가
+            body.Remove(tail); // 사라지고
+            Point head = FindHeadposition(); // 머리의 자리가
+            body.Add(head); // 생기고
+
+            tail.Clear(); // 여기서 계속 업데이트 하면서
+            head.Draw(); // 생긴자리에 그림 채우고 사라진자리에 그림 지우고
+        }
+
+        public Point FindHeadposition()
+        {
+            Point head = body.Last();
+            Point headPoint = new Point(head.x, head.y, head.symbol);
+            switch (direction)
+            {
+                case Direction.LEFT:
+                    headPoint.x -= 1;
+                    break;
+                case Direction.RIGHT:
+                    headPoint.x += 1;
+                    break;
+                case Direction.UP:
+                    headPoint.y -= 1;
+                    break;
+                case Direction.DOWN:
+                    headPoint.y += 1;
+                    break;
+            }
+            return headPoint;
+        }
+    }
+    
 
 
     class FoodCreator
@@ -107,7 +221,6 @@ class SnakeGame
             int y = random.Next(1, FoodPositionY);
             return new Point(x, y, FoodMark);
         }
-        // 음식 재생성
     }
 
     
